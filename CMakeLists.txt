@@ -53,6 +53,8 @@ function(trusted_firmware_build)
     message(FATAL_ERROR "Unsupported ZEPHYR_TOOLCHAIN_VARIANT: ${ZEPHYR_TOOLCHAIN_VARIANT}")
   endif()
 
+  set(ZEPHYR_TFM_MODULE_DIR ${ZEPHYR_BASE}/../modules/tee/tfm)
+
   include(ExternalProject)
   
   ExternalProject_Add(

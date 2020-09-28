@@ -1,22 +1,22 @@
 #!/bin/sh
 
-TFM_GIT_SHA=TF-Mv1.1
-TFM_TESTS_GIT_SHA=TF-Mv1.1
+TFM_GIT_SHA=upstreaming
+TFM_TESTS_GIT_SHA=778942344c5fea2c9fc9c13cdc562666fa0460e2
 MCUBOOT_GIT_SHA=v1.6.0
-MBED_CRYPTO_GIT_SHA=mbedcrypto-3.0.1
+MBEDTLS_GIT_SHA=mbedtls-2.23.0
 PSA_ARCH_TESTS_GIT_SHA=v20.03_API1.0
 
 if [ ! -d trusted-firmware-m/.git ]; then
-   git clone https://git.trustedfirmware.org/trusted-firmware-m.git -b ${TFM_GIT_SHA} --bare trusted-firmware-m/.git
+   git clone https://github.com/oyvindronningstad/trusted-firmware-m.git -b ${TFM_GIT_SHA} --bare trusted-firmware-m/.git
    cd trusted-firmware-m
    git init
    git checkout -f
    cd ..
 fi
 
-if [ ! -d mbed-crypto/.git ]; then
-   git clone https://github.com/ARMmbed/mbed-crypto.git -b ${MBED_CRYPTO_GIT_SHA} --bare mbed-crypto/.git
-   cd mbed-crypto
+if [ ! -d mbedtls/.git ]; then
+   git clone https://github.com/ARMmbed/mbedtls.git -b ${MBEDTLS_GIT_SHA} --bare mbedtls/.git
+   cd mbedtls
    git init
    git checkout -f
    cd ..
@@ -45,4 +45,3 @@ if [ ! -d psa-arch-tests/.git ]; then
    git checkout -f
    cd ..
 fi
-

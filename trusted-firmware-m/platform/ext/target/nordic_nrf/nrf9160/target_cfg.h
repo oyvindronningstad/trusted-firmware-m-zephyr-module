@@ -18,6 +18,19 @@
 #ifndef __TARGET_CFG_H__
 #define __TARGET_CFG_H__
 
+/**
+ * \file target_cfg.h
+ * \brief nRF9160 target configuration header
+ *
+ * This file contains the platform specific functions to configure
+ * the Cortex-M33 core, memory permissions and security attribution
+ * on the nRF9160 platform.
+ *
+ * Memory permissions and security attribution are configured via
+ * the System Protection Unit (SPU) which is the nRF specific Implementation
+ * Defined Attribution Unit (IDAU).
+ */
+
 #include "tfm_plat_defs.h"
 
 #define TFM_DRIVER_STDIO    Driver_USART1

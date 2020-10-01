@@ -148,22 +148,53 @@ if (NOT USE_STATIC_MBEDTLS_LIBRARY AND NOT USE_SHARED_MBEDTLS_LIBRARY)
     message(FATAL_ERROR "Need to choose static or shared mbedtls build!")
 endif(NOT USE_STATIC_MBEDTLS_LIBRARY AND NOT USE_SHARED_MBEDTLS_LIBRARY)
 
-if(USE_STATIC_MBEDTLS_LIBRARY AND USE_SHARED_MBEDTLS_LIBRARY)
-    set(mbedtls_static_target "mbedtls_static")
-    set(mbedx509_static_target "mbedx509_static")
-    set(mbedcrypto_static_target "mbedcrypto_static")
-elseif(USE_STATIC_MBEDTLS_LIBRARY)
-    set(mbedtls_static_target "mbedtls")
-    set(mbedx509_static_target "mbedx509")
-    set(mbedcrypto_static_target "mbedcrypto")
+if(NOT DEFINED mbedtls_target)
+    set(mbedtls_target "mbedtls")
+    set(mbedtls_target "mbedtls" PARENT_SCOPE)
 endif()
+
+if(NOT DEFINED mbedx509_target)
+    set(mbedx509_target "mbedx509")
+    set(mbedx509_target "mbedx509" PARENT_SCOPE)
+endif()
+
+if(NOT DEFINED mbedcrypto_target)
+    set(mbedcrypto_target "mbedcrypto")
+    set(mbedcrypto_target "mbedcrypto" PARENT_SCOPE)
+endif()
+
+if (USE_STATIC_MBEDTLS_LIBRARY)
+    if(NOT DEFINED mbedtls_static_target)
+        set(mbedtls_static_target ${mbedtls_target})
+        set(mbedtls_static_target ${mbedtls_target} PARENT_SCOPE)
+    endif()
+
+    if(NOT DEFINED mbedx509_static_target)
+        set(mbedx509_static_target ${mbedx509_target})
+        set(mbedx509_static_target ${mbedx509_target} PARENT_SCOPE)
+    endif()
+
+    if(NOT DEFINED mbedcrypto_static_target)
+        set(mbedcrypto_static_target ${mbedcrypto_target})
+        set(mbedcrypto_static_target ${mbedcrypto_target} PARENT_SCOPE)
+    endif()
+endif()
+
+if(USE_STATIC_MBEDTLS_LIBRARY AND USE_SHARED_MBEDTLS_LIBRARY)
+    string(APPEND mbedtls_static_target "_static")
+    string(APPEND mbedx509_static_target "_static")
+    string(APPEND mbedcrypto_static_target "_static")
+endif()
+
 
 if(USE_STATIC_MBEDTLS_LIBRARY)
     add_library(${mbedcrypto_static_target} STATIC ${src_crypto})
     set_target_properties(${mbedcrypto_static_target} PROPERTIES OUTPUT_NAME mbedcrypto)
     target_link_libraries(${mbedcrypto_static_target} ${libs})
     target_include_directories(${mbedcrypto_static_target}
-        PUBLIC ${MBEDTLS_DIR}/include/)
+        PUBLIC ${MBEDTLS_DIR}/include/
+        PUBLIC ${MBEDTLS_DIR}/include/mbedtls/
+    )
 
     add_library(${mbedx509_static_target} STATIC ${src_x509})
     set_target_properties(${mbedx509_static_target} PROPERTIES OUTPUT_NAME mbedx509)
@@ -171,39 +202,49 @@ if(USE_STATIC_MBEDTLS_LIBRARY)
 
     add_library(${mbedtls_static_target} STATIC ${src_tls})
     set_target_properties(${mbedtls_static_target} PROPERTIES OUTPUT_NAME mbedtls)
-    target_link_libraries(${mbedtls_static_target} ${libs} ${mbedx509_static_target})
+    target_link_libraries(${mbedtls_static_target} PUBLIC ${libs} ${mbedx509_static_target})
 
-    install(TARGETS ${mbedtls_static_target} ${mbedx509_static_target} ${mbedcrypto_static_target}
-            DESTINATION ${LIB_INSTALL_DIR}
-            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    if(INSTALL_MBEDTLS)
+        install(TARGETS ${mbedtls_static_target} ${mbedx509_static_target} ${mbedcrypto_static_target}
+                DESTINATION ${LIB_INSTALL_DIR}
+                PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    endif()
 endif(USE_STATIC_MBEDTLS_LIBRARY)
 
 if(USE_SHARED_MBEDTLS_LIBRARY)
 
-    add_library(mbedcrypto SHARED ${src_crypto})
-    set_target_properties(mbedcrypto PROPERTIES VERSION 2.23.0 SOVERSION 5)
-    target_link_libraries(mbedcrypto ${libs})
-    target_include_directories(mbedcrypto
+    add_library(${mbedcrypto_target} SHARED ${src_crypto})
+    set_target_properties(${mbedcrypto_target} PROPERTIES VERSION 2.23.0 SOVERSION 5)
+    target_link_libraries(${mbedcrypto_target} ${libs})
+    target_include_directories(${mbedcrypto_target}
+        PUBLIC ${MBEDTLS_DIR}/include/
+        PUBLIC ${MBEDTLS_DIR}/include/mbedtls/
+    )
+
+    add_library(${mbedx509_target} SHARED ${src_x509})
+    set_target_properties(${mbedx509_target} PROPERTIES VERSION 2.23.0 SOVERSION 1)
+    target_link_libraries(${mbedx509_target} ${libs} ${mbedcrypto_target})
+    target_include_directories(${mbedx509_target}
         PUBLIC ${MBEDTLS_DIR}/include/)
 
-    add_library(mbedx509 SHARED ${src_x509})
-    set_target_properties(mbedx509 PROPERTIES VERSION 2.23.0 SOVERSION 1)
-    target_link_libraries(mbedx509 ${libs} mbedcrypto)
-    target_include_directories(mbedx509
-        PUBLIC ${MBEDTLS_DIR}/include/)
+    add_library(${mbedtls_target} SHARED ${src_tls})
+    set_target_properties(${mbedtls_target} PROPERTIES VERSION 2.23.0 SOVERSION 13)
+    target_link_libraries(${mbedtls_target} PUBLIC ${libs} ${mbedx509_target})
+    target_include_directories(${mbedtls_target}
+        PUBLIC ${${mbedtls_target}_DIR}/include/)
 
-    add_library(mbedtls SHARED ${src_tls})
-    set_target_properties(mbedtls PROPERTIES VERSION 2.23.0 SOVERSION 13)
-    target_link_libraries(mbedtls ${libs} mbedx509)
-    target_include_directories(mbedtls
-        PUBLIC ${MBEDTLS_DIR}/include/)
-
-    install(TARGETS mbedtls mbedx509 mbedcrypto
-            DESTINATION ${LIB_INSTALL_DIR}
-            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    if(INSTALL_MBEDTLS)
+        install(TARGETS ${mbedtls_target} ${mbedx509_target} ${mbedcrypto_target}
+                DESTINATION ${LIB_INSTALL_DIR}
+                PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    endif()
 endif(USE_SHARED_MBEDTLS_LIBRARY)
 
-add_custom_target(lib DEPENDS mbedcrypto mbedx509 mbedtls)
+if(NOT DEFINED lib_target)
+    set(lib_target lib)
+endif()
+
+add_custom_target(${lib_target} DEPENDS ${mbedcrypto_target} ${mbedx509_target} ${mbedtls_target})
 if(USE_STATIC_MBEDTLS_LIBRARY AND USE_SHARED_MBEDTLS_LIBRARY)
-    add_dependencies(lib mbedcrypto_static mbedx509_static mbedtls_static)
+    add_dependencies(${lib_target} ${mbedcrypto_static_target} ${mbedx509_static_target} ${mbedtls_static_target})
 endif()

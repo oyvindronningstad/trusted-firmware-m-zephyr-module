@@ -28,21 +28,24 @@ cmake_minimum_required(VERSION 3.13.1)
 # trusted_firmware_build(BINARY_DIR ${CMAKE_BINARY_DIR}/tfm
 #                        BOARD ${TFMBOARD}
 #                        CFGFILE "ConfigRegressionIPC"
-#                        OUT_VENEERS_FILE VENEERS_FILE
-#                        OUT_INCLUDE_PATH TFM_INCLUDE_PATH
 #                        BL2 True)
 function(trusted_firmware_build)
   set(options IPC)
-  set(oneValueArgs BINARY_DIR BOARD CFGFILE OUT_VENEERS_FILE OUT_INCLUDE_PATH BL2)
+  set(oneValueArgs BINARY_DIR BOARD BL2 ISOLATION_LEVEL)
   cmake_parse_arguments(TFM "${options}" "${oneValueArgs}" "" ${ARGN})
 
   if(DEFINED TFM_BL2)
     set(TFM_BL2_ARG "-DBL2=${TFM_BL2}")
   endif()
+  if(DEFINED TFM_ISOLATION_LEVEL)
+    set(TFM_ISOLATION_LEVEL_ARG -DTFM_ISOLATION_LEVEL=${TFM_ISOLATION_LEVEL})
+  endif()
+  if(DEFINED TFM_IPC)
+    set(TFM_IPC_ARG -DTFM_PSA_API=ON)
+  endif()
 
-  set(VENEERS_FILE ${TFM_BINARY_DIR}/install/export/tfm/veneers/s_veneers.o)
-  set(${TFM_OUT_VENEERS_FILE} ${VENEERS_FILE} PARENT_SCOPE)
-  set(${TFM_OUT_INCLUDE_PATH} ${TFM_BINARY_DIR}/install/export/tfm/include PARENT_SCOPE)
+  set(VENEERS_FILE ${TFM_BINARY_DIR}/secure_fw/s_veneers.o)
+  set(PSA_API_NS_PATH ${TFM_BINARY_DIR}/interface/libpsa_api_ns.a)
 
   # Get the toolchain variant
   # TODO: Add support for cross-compile toolchain variant
@@ -61,38 +64,46 @@ function(trusted_firmware_build)
 
   include(ExternalProject)
 
+  message("TFM_BINARY_DIR: ${TFM_BINARY_DIR}")
+
   ExternalProject_Add(
     tfm
     SOURCE_DIR ${ZEPHYR_TFM_MODULE_DIR}/trusted-firmware-m
     BINARY_DIR ${TFM_BINARY_DIR}
-    CMAKE_ARGS -DPROJ_CONFIG=${ZEPHYR_TFM_MODULE_DIR}/trusted-firmware-m/configs/${TFM_CFGFILE}.cmake
-               -DTARGET_PLATFORM=${TFM_BOARD}
+    CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${ZEPHYR_TFM_MODULE_DIR}/trusted-firmware-m/toolchain_GNUARM.cmake
+               -DMCUBOOT_PATH=${ZEPHYR_TFM_MODULE_DIR}/../../../bootloader/mcuboot
+               -DPSA_ARCH_TESTS_PATH=${ZEPHYR_TFM_MODULE_DIR}/psa-arch-tests
+               -DTFM_TEST_REPO_PATH=${ZEPHYR_TFM_MODULE_DIR}/tf-m-tests
+               -DMBEDCRYPTO_PATH=${ZEPHYR_TFM_MODULE_DIR}/mbedtls
+               -DCMAKE_BUILD_TYPE=RelWithDebInfo
+               -DTFM_PLATFORM=${TFM_BOARD}
                ${TFM_BL2_ARG}
-               -DCOMPILER=${TFM_TOOLCHAIN}
                -DGNUARM_PREFIX=${TFM_TOOLCHAIN_PREFIX}
                -DGNUARM_PATH=${TFM_TOOLCHAIN_PATH}
+               -DTEST_S=ON
+               -DTEST_NS=ON
+               ${TFM_IPC_ARG}
+               ${TFM_ISOLATION_LEVEL_ARG}
     BUILD_ALWAYS True
     USES_TERMINAL_BUILD True
-    BUILD_BYPRODUCTS ${VENEERS_FILE}
+    BUILD_BYPRODUCTS ${VENEERS_FILE} ${PSA_API_NS_PATH}
   )
 
-  set(TFM_INTERFACE_SOURCE ${ZEPHYR_TFM_MODULE_DIR}/trusted-firmware-m/interface/src)
-
-  # IPC mode source dependencies
-  if(TFM_IPC)
-    add_library(tfm_ipc_psa_api
-                ${TFM_INTERFACE_SOURCE}/tfm_psa_ns_api.c
-                ${TFM_INTERFACE_SOURCE}/tfm_crypto_ipc_api.c
-                ${TFM_INTERFACE_SOURCE}/tfm_initial_attestation_ipc_api.c
-                ${TFM_INTERFACE_SOURCE}/tfm_its_ipc_api.c
-                ${TFM_INTERFACE_SOURCE}/tfm_platform_ipc_api.c
-                ${TFM_INTERFACE_SOURCE}/tfm_ps_ipc_api.c
-                ${TFM_INTERFACE_SOURCE}/tfm_ns_interface.c
-    )
-    target_include_directories(tfm_ipc_psa_api PUBLIC ${ZEPHYR_TFM_MODULE_DIR}/trusted-firmware-m/interface/include)
-    target_compile_definitions(tfm_ipc_psa_api PUBLIC TFM_PSA_API TFM_PARTITION_TEST_CORE_IPC)
-    target_link_libraries(tfm_ipc_psa_api PRIVATE zephyr_interface)
-  endif()
+  add_library(tfm_ipc_psa_api STATIC IMPORTED)
+  set_target_properties(tfm_ipc_psa_api PROPERTIES
+    IMPORTED_LOCATION ${PSA_API_NS_PATH}
+  )
+  add_library(veneer_lib STATIC IMPORTED)
+  set_target_properties(veneer_lib PROPERTIES
+    IMPORTED_LOCATION ${VENEERS_FILE}
+  )
+  add_dependencies(tfm_ipc_psa_api tfm)
+  file(MAKE_DIRECTORY ${TFM_BINARY_DIR}/generated/interface/include)
+  target_include_directories(tfm_ipc_psa_api INTERFACE
+    ${ZEPHYR_TFM_MODULE_DIR}/trusted-firmware-m/interface/include
+    ${TFM_BINARY_DIR}/generated/interface/include
+  )
+  target_link_libraries(tfm_ipc_psa_api INTERFACE zephyr_interface veneer_lib)
 
 endfunction()
 
@@ -111,32 +122,24 @@ function(trusted_firmware_get_post_build_commands out_commands)
     endif()
 
     set(TFM_MCUBOOT_DIR "${ZEPHYR_TFM_MODULE_DIR}/trusted-firmware-m/bl2/ext/mcuboot")
-    set(PREPROCESSED_FILE "${CMAKE_BINARY_DIR}/tfm/image_macros_preprocessed")
+    set(PREPROCESSED_FILE_S "${CMAKE_BINARY_DIR}/tfm/bl2/ext/mcuboot/CMakeFiles/signing_layout_s.dir/signing_layout_s.o")
+    set(PREPROCESSED_FILE_NS "${CMAKE_BINARY_DIR}/tfm/bl2/ext/mcuboot/CMakeFiles/signing_layout_ns.dir/signing_layout_ns.o")
 
     if(NOT DEFINED TFM_PUBLIC_KEY_FORMAT)
       set(TFM_PUBLIC_KEY_FORMAT "full")
     endif()
 
+    set (ADD_SECURITY_COUNTER_NS -s auto)
+
     set(${out_commands}
 
-      # Sign secure binary image with public key
-      COMMAND ${PYTHON_EXECUTABLE} ${TFM_MCUBOOT_DIR}/scripts/imgtool.py
-        sign
-        --layout ${PREPROCESSED_FILE}_s.c
-        -k ${CONFIG_TFM_KEY_FILE_S}
-        --public-key-format ${TFM_PUBLIC_KEY_FORMAT}
-        --align 1
-        -v ${TFM_IMAGE_VERSION_S}
-        ${ADD_NS_IMAGE_MIN_VER}
-        ${ADD_SECURITY_COUNTER_S}
-        -H 0x400
-        ${CMAKE_BINARY_DIR}/tfm/install/outputs/${TFM_TARGET_PLATFORM}/tfm_s.bin
+      COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_BINARY_DIR}/tfm/bin/tfm_s_signed.bin
         ${CMAKE_BINARY_DIR}/tfm_s_signed.bin
 
       # Sign non-secure binary image with public key
-      COMMAND ${PYTHON_EXECUTABLE} ${TFM_MCUBOOT_DIR}/scripts/imgtool.py
-        sign
-        --layout ${PREPROCESSED_FILE}_ns.c
+      COMMAND ${PYTHON_EXECUTABLE} ${TFM_MCUBOOT_DIR}/scripts/wrapper/wrapper.py
+        --layout ${PREPROCESSED_FILE_NS}
         -k ${CONFIG_TFM_KEY_FILE_NS}
         --public-key-format ${TFM_PUBLIC_KEY_FORMAT}
         --align 1
@@ -144,21 +147,23 @@ function(trusted_firmware_get_post_build_commands out_commands)
         ${ADD_S_IMAGE_MIN_VER}
         ${ADD_SECURITY_COUNTER_NS}
         -H 0x400
-        --included-header
         ${CMAKE_BINARY_DIR}/zephyr/${KERNEL_BIN_NAME}
         ${CMAKE_BINARY_DIR}/zephyr_ns_signed.bin
 
       # Create concatenated binary image from the two independently signed binary files
       COMMAND ${PYTHON_EXECUTABLE} ${TFM_MCUBOOT_DIR}/scripts/assemble.py
-        --layout ${PREPROCESSED_FILE}_s.c
+        --layout ${PREPROCESSED_FILE_S}
         -s ${CMAKE_BINARY_DIR}/tfm_s_signed.bin
         -n ${CMAKE_BINARY_DIR}/zephyr_ns_signed.bin
         -o ${CMAKE_BINARY_DIR}/tfm_sign.bin
 
       # Copy mcuboot.bin
       COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_BINARY_DIR}/tfm/install/outputs/${TFM_TARGET_PLATFORM}/mcuboot.bin
-        ${CMAKE_BINARY_DIR}
+        ${CMAKE_BINARY_DIR}/tfm/bin/bl2.bin
+        ${CMAKE_BINARY_DIR}/mcuboot.bin
+      COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_BINARY_DIR}/tfm/bin/bl2.hex
+        ${CMAKE_BINARY_DIR}/mcuboot.hex
 
       PARENT_SCOPE
     )

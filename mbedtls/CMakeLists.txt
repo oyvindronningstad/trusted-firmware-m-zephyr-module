@@ -12,6 +12,7 @@ option(USE_PKCS11_HELPER_LIBRARY "Build mbed TLS with the pkcs11-helper library.
 option(ENABLE_ZLIB_SUPPORT "Build mbed TLS with zlib library." OFF)
 
 option(ENABLE_PROGRAMS "Build mbed TLS programs." ON)
+option(ENABLE_DOCS "Build api documentation." ON)
 
 option(UNSAFE_BUILD "Allow unsafe builds. These builds ARE NOT SECURE." OFF)
 option(MBEDTLS_FATAL_WARNINGS "Compiler warnings treated as errors" ON)
@@ -94,10 +95,6 @@ option: \n\
     endif()
 endif()
 
-set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}
-    CACHE STRING "Choose the type of build: None Debug Release Coverage ASan ASanDbg MemSan MemSanDbg Check CheckFull"
-    FORCE)
-
 # Create a symbolic link from ${base_name} in the binary directory
 # to the corresponding path in the source directory.
 function(link_to_source base_name)
@@ -171,7 +168,10 @@ if(CMAKE_COMPILER_IS_CLANG)
 endif(CMAKE_COMPILER_IS_CLANG)
 
 if(CMAKE_COMPILER_IS_IAR)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --warn_about_c_style_casts --warnings_are_errors -Ohz")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --warn_about_c_style_casts")
+    set(CMAKE_C_FLAGS_RELEASE     "-Ohz")
+    set(CMAKE_C_FLAGS_DEBUG       "--debug -On")
+    set(CMAKE_C_FLAGS_CHECK       "--warnings_are_errors")
 endif(CMAKE_COMPILER_IS_IAR)
 
 if(CMAKE_COMPILER_IS_MSVC)
@@ -216,22 +216,23 @@ if(ENABLE_ZLIB_SUPPORT)
     endif(ZLIB_FOUND)
 endif(ENABLE_ZLIB_SUPPORT)
 
-add_subdirectory(include)
-
 add_subdirectory(3rdparty)
 include_directories(${thirdparty_inc})
 list(APPEND libs ${thirdparty_lib})
 add_definitions(${thirdparty_def})
 
 add_subdirectory(library)
+add_subdirectory(include)
 
 if(ENABLE_PROGRAMS)
     add_subdirectory(programs)
 endif()
 
-ADD_CUSTOM_TARGET(apidoc
-    COMMAND doxygen mbedtls.doxyfile
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doxygen)
+if(ENABLE_DOCS)
+    ADD_CUSTOM_TARGET(apidoc
+        COMMAND doxygen mbedtls.doxyfile
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doxygen)
+endif()
 
 if(ENABLE_TESTING)
     enable_testing()

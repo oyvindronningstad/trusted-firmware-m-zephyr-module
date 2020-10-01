@@ -34,7 +34,6 @@
 
 #include <assert.h>
 
-#include <soc/nrfx_atomic.h>
 #include <soc/nrfx_coredep.h>
 #include <soc/nrfx_irqs.h>
 
@@ -156,7 +155,7 @@ void nrfx_critical_section_exit(void);
 //------------------------------------------------------------------------------
 
 /** @brief Atomic 32-bit unsigned type. */
-#define nrfx_atomic_t  nrfx_atomic_u32_t
+#define nrfx_atomic_t
 
 /**
  * @brief Macro for storing a value to an atomic object and returning its previous value.
@@ -166,8 +165,7 @@ void nrfx_critical_section_exit(void);
  *
  * @return Previous value of the atomic object.
  */
-#define NRFX_ATOMIC_FETCH_STORE(p_data, value) \
-    nrfx_atomic_u32_fetch_store(p_data, value)
+#define NRFX_ATOMIC_FETCH_STORE(p_data, value)
 
 /**
  * @brief Macro for running a bitwise OR operation on an atomic object and returning its previous value.
@@ -177,8 +175,7 @@ void nrfx_critical_section_exit(void);
  *
  * @return Previous value of the atomic object.
  */
-#define NRFX_ATOMIC_FETCH_OR(p_data, value) \
-    nrfx_atomic_u32_fetch_or(p_data, value)
+#define NRFX_ATOMIC_FETCH_OR(p_data, value)
 
 /**
  * @brief Macro for running a bitwise AND operation on an atomic object
@@ -189,8 +186,7 @@ void nrfx_critical_section_exit(void);
  *
  * @return Previous value of the atomic object.
  */
-#define NRFX_ATOMIC_FETCH_AND(p_data, value) \
-    nrfx_atomic_u32_fetch_and(p_data, value)
+#define NRFX_ATOMIC_FETCH_AND(p_data, value)
 
 /**
  * @brief Macro for running a bitwise XOR operation on an atomic object
@@ -201,8 +197,7 @@ void nrfx_critical_section_exit(void);
  *
  * @return Previous value of the atomic object.
  */
-#define NRFX_ATOMIC_FETCH_XOR(p_data, value) \
-    nrfx_atomic_u32_fetch_xor(p_data, value)
+#define NRFX_ATOMIC_FETCH_XOR(p_data, value)
 
 /**
  * @brief Macro for running an addition operation on an atomic object
@@ -213,8 +208,7 @@ void nrfx_critical_section_exit(void);
  *
  * @return Previous value of the atomic object.
  */
-#define NRFX_ATOMIC_FETCH_ADD(p_data, value) \
-    nrfx_atomic_u32_fetch_add(p_data, value)
+#define NRFX_ATOMIC_FETCH_ADD(p_data, value)
 
 /**
  * @brief Macro for running a subtraction operation on an atomic object
@@ -225,8 +219,7 @@ void nrfx_critical_section_exit(void);
  *
  * @return Previous value of the atomic object.
  */
-#define NRFX_ATOMIC_FETCH_SUB(p_data, value) \
-    nrfx_atomic_u32_fetch_sub(p_data, value)
+#define NRFX_ATOMIC_FETCH_SUB(p_data, value)
 
 //------------------------------------------------------------------------------
 

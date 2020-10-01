@@ -4,10 +4,9 @@ Trusted Firmware M
 
 Trusted Firmware-M (TF-M) implements the Secure Processing Environment (SPE)
 for Armv8-M, Armv8.1-M architectures (e.g. the `Cortex-M33`_, `Cortex-M23`_,
-`Cortex-M55`_ processors) or dual-core platforms.
-It is the Platform Security Architecture (PSA) reference implementation
-aligning with `PSA Certified`_ guidelines, enabling chips,
-Real Time Operating Systems and devices to become PSA Certified.
+`Cortex-M55`_ processors) or dual-core platforms.It is the platform security
+architecture  reference implementation aligning with PSA Certified guidelines,
+enabling chips,Real Time Operating Systems and devices to become PSA Certified.
 
 TF-M relies on an isolation boundary between the Non-secure Processing
 Environment (NSPE) and the Secure Processing Environment (SPE). It can but is
@@ -26,7 +25,7 @@ architectures. In pre-Armv8-M architectures physical core isolation is required.
    :scale: 65 %
    :align: center
 
-   PSA FF compiant design with TF-M
+   FF-M compliant design with TF-M
 
 Applications and Libraries in the Non-secure Processing Environment can
 utilize these secure services with a standardized set of PSA Functional APIs.
@@ -76,9 +75,9 @@ Getting Started
 ************
 Prerequisite
 ************
-Trusted Firmware M provides a reference implementation of PSA specifications.
-It is assumed that the reader is familiar with PSA concepts and terms. PSA
-specifications can be found at
+Trusted Firmware M provides a reference implementation of platform security
+architecture  reference implementation aligning with PSA Certified guidelines.
+It is assumed that the reader is familiar with specifications can be found at
 `Platform Security Architecture Resources <https://developer.arm.com/architectures/security-architectures/platform-security-architecture>`__.
 
 The current TF-M implementation specifically targets TrustZone for ARMv8-M so a
@@ -142,6 +141,10 @@ Platforms supported
           <https://www.st.com/content/st_com/en/products/evaluation-tools/product-evaluation-tools/mcu-mpu-eval-tools/stm32-mcu-mpu-eval-tools/stm32-nucleo-boards/nucleo-l552ze-q.html>`_
         - `DISCO L562QE.
           <https://www.st.com/content/st_com/en/products/evaluation-tools/product-evaluation-tools/mcu-mpu-eval-tools/stm32-mcu-mpu-eval-tools/stm32-discovery-kits/stm32l562e-dk.html>`_
+        - `nRF9160 DK (nordic_nrf/nrf9160dk_nrf9160).
+          <https://www.nordicsemi.com/Software-and-tools/Development-Kits/nRF9160-DK>`_
+        - `nRF5340 PDK (nordic_nrf/nrf5340pdk_nrf5340_cpuapp).
+          <https://www.nordicsemi.com/Software-and-tools/Development-Kits/nRF5340-PDK>`_
 
     - Cortex-M23 system:
 

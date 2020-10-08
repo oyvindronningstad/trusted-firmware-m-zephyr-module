@@ -67,6 +67,7 @@ function(trusted_firmware_build)
   set(VENEERS_FILE ${TFM_BINARY_DIR}/secure_fw/s_veneers.o)
   set(${TFM_OUT_VENEERS_FILE} ${VENEERS_FILE} PARENT_SCOPE)
   set(${TFM_OUT_INCLUDE_PATH} ${TFM_BINARY_DIR}/install/export/tfm/include PARENT_SCOPE)
+  set(OS_WRAPPER_PATH ${TFM_BINARY_DIR}/lib/ext/tfm_test_repo-src/app/os_wrapper_cmsis_rtos_v2.c)
 
   set(PSA_API_NS_PATH ${TFM_BINARY_DIR}/interface/libpsa_api_ns.a)
 
@@ -88,7 +89,7 @@ function(trusted_firmware_build)
   endif()
 
   include(ExternalProject)
-  
+
   ExternalProject_Add(
     tfm
     SOURCE_DIR ${ZEPHYR_TFM_MODULE_DIR}/trusted-firmware-m
@@ -105,7 +106,7 @@ function(trusted_firmware_build)
                -DTFM_TOOLCHAIN_PREFIX=${TFM_TOOLCHAIN_PREFIX}
     BUILD_ALWAYS True
     USES_TERMINAL_BUILD True
-    BUILD_BYPRODUCTS ${VENEERS_FILE} ${PSA_API_NS_PATH}
+    BUILD_BYPRODUCTS ${VENEERS_FILE} ${PSA_API_NS_PATH} ${OS_WRAPPER_PATH}
   )
 
   # IPC mode source dependencies
@@ -126,6 +127,17 @@ function(trusted_firmware_build)
     ${TFM_BINARY_DIR}/generated/interface/include
   )
 
-  target_link_libraries(tfm_ipc_psa_api INTERFACE zephyr_interface veneer_lib)
+  add_library(os_wrapper_lib INTERFACE)
+
+  target_sources(os_wrapper_lib INTERFACE ${OS_WRAPPER_PATH})
+
+  file(MAKE_DIRECTORY ${TFM_BINARY_DIR}/lib/ext/tfm_test_repo-src/CMSIS/RTOS2/Include)
+  target_include_directories(os_wrapper_lib
+    INTERFACE
+      ${TFM_BINARY_DIR}/lib/ext/tfm_test_repo-src/CMSIS/RTOS2/Include
+  )
+  add_dependencies(os_wrapper_lib tfm)
+
+  target_link_libraries(tfm_ipc_psa_api INTERFACE zephyr_interface veneer_lib os_wrapper_lib)
 
 endfunction()

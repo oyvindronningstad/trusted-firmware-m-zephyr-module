@@ -6,6 +6,14 @@
 #-------------------------------------------------------------------------------
 
 if (NOT TFM_PARTITION_INITIAL_ATTESTATION)
+    if(TFM_PARTITION_PSA_PROXY)
+        add_library(tfm_attestation_defs INTERFACE)
+
+        target_include_directories(tfm_attestation_defs
+            INTERFACE
+                .
+        )
+    endif()
     return()
 endif()
 
@@ -21,6 +29,13 @@ target_sources(tfm_partition_attestation PRIVATE
     $<$<NOT:$<BOOL:${SYMMETRIC_INITIAL_ATTESTATION}>>:attest_asymmetric_key.c>
     $<$<BOOL:${SYMMETRIC_INITIAL_ATTESTATION}>:attest_symmetric_key.c>
     attest_token_encode.c
+)
+
+# The generated sources
+target_sources(tfm_partition_attestation
+    PRIVATE
+        $<$<BOOL:${TFM_PSA_API}>:
+            ${CMAKE_BINARY_DIR}/generated/secure_fw/partitions/initial_attestation/auto_generated/intermedia_tfm_initial_attestation.c>
 )
 
 target_include_directories(tfm_partition_attestation
@@ -61,7 +76,7 @@ target_include_directories(tfm_attestation_defs
 
 ############################ Secure API ########################################
 
-target_sources(tfm_secure_api
+target_sources(tfm_sprt
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/tfm_attest_secure_api.c
 )

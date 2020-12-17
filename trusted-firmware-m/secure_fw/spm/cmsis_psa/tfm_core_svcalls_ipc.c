@@ -107,6 +107,8 @@ static int32_t SVC_Handler_IPC(tfm_svc_number_t svc_num, uint32_t *ctx,
         break;
     case TFM_SVC_PSA_LIFECYCLE:
         return tfm_spm_get_lifecycle_state();
+    case TFM_SVC_OUTPUT_UNPRIV_STRING:
+        return tfm_hal_output_spm_log(ctx[0], ctx[1]);
     default:
 #ifdef PLATFORM_SVC_HANDLERS
         return (platform_svc_handlers(svc_num, ctx, lr));
@@ -120,7 +122,7 @@ static int32_t SVC_Handler_IPC(tfm_svc_number_t svc_num, uint32_t *ctx,
 
 uint32_t tfm_core_svc_handler(uint32_t *svc_args, uint32_t exc_return)
 {
-    tfm_svc_number_t svc_number = TFM_SVC_SFN_REQUEST;
+    tfm_svc_number_t svc_number = TFM_SVC_PSA_FRAMEWORK_VERSION;
     /*
      * Stack contains:
      * r0, r1, r2, r3, r12, r14 (lr), the return address and xPSR

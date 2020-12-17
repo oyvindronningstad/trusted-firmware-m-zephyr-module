@@ -1,5 +1,6 @@
 #-------------------------------------------------------------------------------
 # Copyright (c) 2020, Arm Limited. All rights reserved.
+# Copyright (c) 2020, Cypress Semiconductor Corporation. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
@@ -8,21 +9,16 @@
 # Generate correct filename
 string(TOUPPER ${TFM_PLATFORM} TFM_PLATFORM_UPPERCASE)
 string(REGEX REPLACE "-" "_" TFM_PLATFORM_UPPERCASE_UNDERSCORE ${TFM_PLATFORM_UPPERCASE})
+string(REGEX REPLACE "^(\\.\\.([\\/\\\\]))+" "EXTERNAL\\2" TFM_PLATFORM_UPPERCASE_UNDERSCORE_NO_PARENT_DIR ${TFM_PLATFORM_UPPERCASE_UNDERSCORE})
 
 install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
-        DESTINATION ${CMAKE_BINARY_DIR}/install/outputs/${TFM_PLATFORM_UPPERCASE_UNDERSCORE}
+        DESTINATION ${CMAKE_BINARY_DIR}/install/outputs/${TFM_PLATFORM_UPPERCASE_UNDERSCORE_NO_PARENT_DIR}
 )
 
 set(INTERFACE_INC_DIR ${CMAKE_SOURCE_DIR}/interface/include)
 set(INTERFACE_SRC_DIR ${CMAKE_SOURCE_DIR}/interface/src)
 set(EXPORT_INC_DIR    ${CMAKE_BINARY_DIR}/install/export/tfm/include)
 set(EXPORT_SRC_DIR    ${CMAKE_BINARY_DIR}/install/export/tfm/src)
-
-# export NS static lib
-install(TARGETS psa_api_ns
-        ARCHIVE
-        DESTINATION ${CMAKE_BINARY_DIR}/install/export/tfm/lib
-)
 
 # export veneer lib
 if (NOT TFM_MULTI_CORE_TOPOLOGY)
@@ -38,6 +34,9 @@ install(FILES       ${INTERFACE_INC_DIR}/psa/client.h
 
 install(FILES       ${INTERFACE_INC_DIR}/os_wrapper/common.h
                     ${INTERFACE_INC_DIR}/os_wrapper/mutex.h
+                    ${INTERFACE_INC_DIR}/os_wrapper/semaphore.h
+                    ${INTERFACE_INC_DIR}/os_wrapper/thread.h
+                    ${INTERFACE_INC_DIR}/os_wrapper/tick.h
         DESTINATION ${EXPORT_INC_DIR}/os_wrapper)
 
 install(FILES       ${CMAKE_BINARY_DIR}/generated/interface/include/psa_manifest/sid.h

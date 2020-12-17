@@ -72,6 +72,7 @@ target_include_directories(platform_s
 
 target_sources(platform_s
     PRIVATE
+        $<$<STREQUAL:${CRYPTO_HW_ACCELERATOR_OTP_STATE},ENABLED>:${CMAKE_CURRENT_SOURCE_DIR}/crypto_keys.c>
         CMSIS_Driver/Driver_Flash_MRAM.c
         CMSIS_Driver/Driver_MPC.c
         CMSIS_Driver/Driver_PPC.c
@@ -148,6 +149,6 @@ if(BL2)
             Device/Config
             Native_Driver
             ${MCUBOOT_PATH}/boot/bootutil/include # for fault_injection_hardening.h only
-            ${CMAKE_CURRENT_BINARY_DIR}/../../../../bl2/ext/mcuboot # for mcuboot_config.h only
+            ${CMAKE_BINARY_DIR}/bl2/ext/mcuboot # for mcuboot_config.h only
     )
 endif()

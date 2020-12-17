@@ -96,8 +96,6 @@ LR_CODE S_CODE_START {
 
     /**** Unprivileged Secure code + RO-data starts here */
     TFM_UNPRIV_CODE +0 ALIGN 32 {
-        platform_retarget_dev.o (+RO)
-        device_definition.o (+RO)
         *(SFN)
         *armlib* (+RO)
         *libtfm_sprt.a (+RO)
@@ -160,14 +158,6 @@ LR_CODE S_CODE_START {
         *({{manifest.manifest.name}}_ATTR_ZI)
     }
 
-    {% if manifest.attr.tfm_partition_ipc %}
-    {{manifest.manifest.name}}_LINKER_STACK +0 ALIGN 128 EMPTY {{manifest.manifest.stack_size}} {
-    }
-    {% else %}
-    {{manifest.manifest.name}}_LINKER_STACK +0 ALIGN 128 EMPTY 0 {
-    }
-    {% endif %}
-
     PT_{{manifest.manifest.name}}_PRIVATE_DATA_END +0 ALIGN 32 {
         /* Position tag */
     }
@@ -212,14 +202,6 @@ LR_CODE S_CODE_START {
         *({{manifest.manifest.name}}_ATTR_RW)
         *({{manifest.manifest.name}}_ATTR_ZI)
     }
-
-    {% if manifest.attr.tfm_partition_ipc %}
-    {{manifest.manifest.name}}_LINKER_STACK +0 ALIGN 128 EMPTY {{manifest.manifest.stack_size}} {
-    }
-    {% else %}
-    {{manifest.manifest.name}}_LINKER_STACK +0 ALIGN 128 EMPTY 0 {
-    }
-    {% endif %}
 
     PT_{{manifest.manifest.name}}_PRIVATE_DATA_END +0 ALIGN 32 {
         /* Position tag */

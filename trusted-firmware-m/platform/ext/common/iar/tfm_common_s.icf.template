@@ -29,8 +29,6 @@ define block ER_TFM_CODE with fixed order, alignment = 8, maximum size = S_CODE_
 };
 
 define block TFM_UNPRIV_CODE with alignment = 32 {
-       ro object platform_retarget_dev.o,
-       ro object device_definition.o,
        section SFN,
        ro section .rodata object tfm_*_secure_api.o,
        ro object *6M_tl*.a,
@@ -139,11 +137,6 @@ define block TFM_SECURE_STACK   with size = 0x2000, alignment = 128 {};
 keep {block TFM_SECURE_STACK};
 #endif /* !defined(TFM_PSA_API) */
 
-define block TFM_UNPRIV_DATA with alignment = 32 {
-       rw object platform_retarget_dev.o,
-       rw object device_definition.o,
-       };
-
 define block TFM_APP_RW_STACK_START with alignment = 32, size = 0 { };
 
 {% for manifest in manifests %}
@@ -164,15 +157,6 @@ define block {{manifest.manifest.name}}_LINKER_DATA with alignment = 32 {
     {% endif %}
     };
 
-    {% if manifest.attr.tfm_partition_ipc %}
-#if defined (TFM_PSA_API)
-define block {{manifest.manifest.name}}_LINKER_STACK with alignment = 128, size = {{manifest.manifest.stack_size}} { };
-#endif
-    {% else %}
-#if defined (TFM_PSA_API)
-define block {{manifest.manifest.name}}_LINKER_STACK with alignment =  128, size = 0 { };
-#endif
-    {% endif %}
     {% if manifest.attr.conditional %}
 #endif /* {{manifest.attr.conditional}} */
     {% endif %}
@@ -243,15 +227,6 @@ define block {{manifest.manifest.name}}_LINKER_DATA with alignment = 32 {
     {% endif %}
     };
 
-    {% if manifest.attr.tfm_partition_ipc %}
-#if defined (TFM_PSA_API)
-define block {{manifest.manifest.name}}_LINKER_STACK with alignment = 128, size = {{manifest.manifest.stack_size}} { };
-#endif
-    {% else %}
-#if defined (TFM_PSA_API)
-define block {{manifest.manifest.name}}_LINKER_STACK with alignment = 128, size = 0 { };
-#endif
-    {% endif %}
     {% if manifest.attr.conditional %}
 #endif /* {{manifest.attr.conditional}} */
     {% endif %}
@@ -365,8 +340,6 @@ define block DATA with fixed order {
     block TFM_SECURE_STACK,
 #endif /* !defined(TFM_PSA_API) */
 
-    block TFM_UNPRIV_DATA,
-
     /**** APP RoT DATA start here */
     /*
      * This empty, zero long execution region is here to mark the start address
@@ -381,9 +354,6 @@ define block DATA with fixed order {
     {% endif %}
     block {{manifest.manifest.name}}_LINKER_DATA,
 
-#if defined (TFM_PSA_API)
-    block {{manifest.manifest.name}}_LINKER_STACK,
-#endif
     {% if manifest.attr.conditional %}
 #endif /* {{manifest.attr.conditional}} */
     {% endif %}
@@ -432,9 +402,6 @@ define block PRIV_DATA with fixed order {
     {% endif %}
     block {{manifest.manifest.name}}_LINKER_DATA,
 
-#if defined (TFM_PSA_API)
-    block {{manifest.manifest.name}}_LINKER_STACK,
-#endif
     {% if manifest.attr.conditional %}
 #endif /* {{manifest.attr.conditional}} */
     {% endif %}

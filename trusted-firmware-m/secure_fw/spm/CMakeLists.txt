@@ -31,7 +31,7 @@ target_include_directories(tfm_spm
 
 target_sources(tfm_spm
     PRIVATE
-        $<$<BOOL:${TFM_PARTITION_INITIAL_ATTESTATION}>:common/tfm_boot_data.c>
+        common/tfm_boot_data.c
         common/tfm_core_utils.c
         common/utilities.c
         common/spm_log.c
@@ -63,6 +63,16 @@ target_sources(tfm_spm
         $<$<AND:$<BOOL:${TFM_PSA_API}>,$<STREQUAL:${CMAKE_SYSTEM_ARCHITECTURE},armv6-m>>:cmsis_psa/arch/tfm_arch_v6m_v7m.c>
         $<$<AND:$<BOOL:${TFM_PSA_API}>,$<STREQUAL:${CMAKE_SYSTEM_ARCHITECTURE},armv7-m>>:cmsis_psa/arch/tfm_arch_v6m_v7m.c>
 )
+
+#workaround for arch-test
+if (TEST_PSA_API STREQUAL IPC)
+    target_sources(driver_partition PRIVATE
+        ${CMAKE_BINARY_DIR}/generated/api-tests/platform/manifests/auto_generated/intermedia_driver_partition_psa.c)
+    target_sources(client_partition PRIVATE
+        ${CMAKE_BINARY_DIR}/generated/api-tests/platform/manifests/auto_generated/intermedia_client_partition_psa.c)
+    target_sources(server_partition PRIVATE
+        ${CMAKE_BINARY_DIR}/generated/api-tests/platform/manifests/auto_generated/intermedia_server_partition_psa.c)
+endif()
 
 target_link_libraries(tfm_spm
     PUBLIC
@@ -130,12 +140,12 @@ target_include_directories(tfm_utilities
 ############################ Secure API ########################################
 
 target_link_libraries(tfm_secure_api
-    PRIVATE
+    INTERFACE
         tfm_partitions
 )
 
 target_include_directories(tfm_secure_api
-    PUBLIC
+    INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<$<BOOL:${TFM_PSA_API}>:${CMAKE_CURRENT_SOURCE_DIR}/model_ipc/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/arch/include>

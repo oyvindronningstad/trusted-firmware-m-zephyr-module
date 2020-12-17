@@ -27,6 +27,13 @@ target_sources(tfm_partition_crypto
         crypto_key_derivation.c
 )
 
+# The generated sources
+target_sources(tfm_partition_crypto
+    PRIVATE
+        $<$<BOOL:${TFM_PSA_API}>:
+            ${CMAKE_BINARY_DIR}/generated/secure_fw/partitions/crypto/auto_generated/intermedia_tfm_crypto.c>
+)
+
 target_include_directories(tfm_partition_crypto
     PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -76,7 +83,7 @@ message(STATUS "---------- Display crypto configuration - stop ---------------")
 
 ############################ Secure API ########################################
 
-target_sources(tfm_secure_api
+target_sources(tfm_sprt
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/tfm_crypto_secure_api.c
 )
@@ -90,7 +97,7 @@ set_source_files_properties(tfm_partition_crypto_secure_api.c
 
 # Pick up configuration definitions
 target_link_libraries(tfm_secure_api
-    PRIVATE
+    INTERFACE
         tfm_partition_crypto
 )
 

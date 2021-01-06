@@ -17,6 +17,13 @@ target_sources(tfm_partition_ps_test
         ./tfm_ps_test_service.c
 )
 
+# The generated sources
+target_sources(tfm_partition_ps_test
+    PRIVATE
+        $<$<BOOL:${TFM_PSA_API}>:
+            ${CMAKE_BINARY_DIR}/generated/test_services/tfm_ps_test_service/auto_generated/intermedia_tfm_ps_test_service.c>
+)
+
 target_include_directories(tfm_partition_ps_test
     PUBLIC
         .
@@ -39,7 +46,7 @@ target_link_libraries(tfm_spm
 
 ############################ Secure API ########################################
 
-target_sources(tfm_secure_api
+target_sources(tfm_sprt
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/tfm_ps_test_service_api.c
 )

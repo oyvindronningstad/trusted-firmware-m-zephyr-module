@@ -14,6 +14,13 @@ target_sources(tfm_partition_secure_client_service
         ./tfm_secure_client_service.c
 )
 
+# The generated sources
+target_sources(tfm_partition_secure_client_service
+    PRIVATE
+        $<$<BOOL:${TFM_PSA_API}>:
+            ${CMAKE_BINARY_DIR}/generated/test_services/tfm_secure_client_service/auto_generated/intermedia_tfm_secure_client_service.c>
+)
+
 target_include_directories(tfm_partition_secure_client_service
     PUBLIC
         .
@@ -26,7 +33,7 @@ target_link_libraries(tfm_partition_secure_client_service
         tfm_secure_api
         psa_interface
         platform_s
-        tfm_test_framework
+        tfm_test_framework_s
         tfm_s_tests
 )
 
@@ -37,7 +44,7 @@ target_link_libraries(tfm_spm
 
 ############################ NS API ############################################
 
-target_sources(psa_api_ns
+target_sources(tfm_api_ns
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/tfm_secure_client_service_api.c
 )
@@ -49,7 +56,7 @@ set_source_files_properties(tfm_secure_client_service_api.c
         COMPILE_FLAGS -Wno-implicit-function-declaration
 )
 
-target_include_directories(psa_api_ns
+target_include_directories(tfm_api_ns
     PUBLIC
         .
 )
